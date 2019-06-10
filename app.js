@@ -38,6 +38,11 @@ app.get('/about', (req, resp) => {
     resp.render('about')
 });
 
+// add idea form
+app.get('/ideas/add', (req, resp) => {
+    resp.render('ideas/add')
+})
+
 const port = 5000;
 
 app.listen(port, () => {

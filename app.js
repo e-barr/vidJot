@@ -1,6 +1,7 @@
 const express = require('express');
 const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 const app = express();
 
@@ -25,6 +26,10 @@ app.engine('handlebars', exphbs({
 }));
 app.set('view engine', 'handlebars');
 
+// body-parser middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
 //index route
 app.get('/', (req, resp) => {
     const title = 'Welcome'
@@ -35,16 +40,39 @@ app.get('/', (req, resp) => {
 
 //about page
 app.get('/about', (req, resp) => {
-    resp.render('about')
+    resp.render('about');
 });
 
 // add idea form
 app.get('/ideas/add', (req, resp) => {
-    resp.render('ideas/add')
+    resp.render('ideas/add');
+});
+
+// process form
+app.post('/ideas', (req, resp) => {
+    let errors = []
+
+    if (!req.body.title) {
+        errors.push({ text: 'Please add a title' })
+    }
+
+    if(!req.body.details) {
+        errors.push({ text: 'Please add some details' })
+    }
+
+    if(errors.length > 0) {
+        resp.render('ideas/add', {
+            errors: errors,
+            title: req.body.title,
+            details: req.body.details
+        })
+    } else {
+        resp.send('passed')
+    }
 })
 
 const port = 5000;
 
 app.listen(port, () => {
-    console.log(`Server started on port ${port}`)
+    console.log(`Server started on port ${port}`);
 })

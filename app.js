@@ -2,6 +2,7 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
 
 const app = express();
 
@@ -30,6 +31,9 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// method-overrie middleware
+app.use(methodOverride('_method'));
+
 //index route
 app.get('/', (req, res) => {
     const title = 'Welcome'
@@ -55,6 +59,18 @@ app.get('/ideas', (req, res) => {
 // add idea form
 app.get('/ideas/add', (req, res) => {
     res.render('ideas/add');
+});
+
+// edit idea form
+app.get('/ideas/edit/:id', (req, res) => {
+    Idea.findOne({
+        _id: req.params.id
+    })
+        .then(idea => {
+            res.render('ideas/edit', {
+                idea:idea
+            })
+        })
 });
 
 // process form
@@ -86,6 +102,22 @@ app.post('/ideas', (req, res) => {
                 res.redirect('/ideas')
             })
     }
+})
+
+// edit form process
+app.put('/ideas/:id', (req, res) => {
+    Idea.findOne({
+        _id: req.params.id
+    })
+        .then(idea => {
+            idea.title = req.body.title,
+            idea.details = req.body.details
+
+            idea.save()
+                .then(idea => {
+                    res.redirect('/ideas')
+                })
+        })
 })
 
 const port = 5000;

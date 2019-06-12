@@ -31,25 +31,25 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 //index route
-app.get('/', (req, resp) => {
+app.get('/', (req, res) => {
     const title = 'Welcome'
-    resp.render('index', {
+    res.render('index', {
         title: title
     });
 });
 
 //about page
-app.get('/about', (req, resp) => {
-    resp.render('about');
+app.get('/about', (req, res) => {
+    res.render('about');
 });
 
 // add idea form
-app.get('/ideas/add', (req, resp) => {
-    resp.render('ideas/add');
+app.get('/ideas/add', (req, res) => {
+    res.render('ideas/add');
 });
 
 // process form
-app.post('/ideas', (req, resp) => {
+app.post('/ideas', (req, res) => {
     let errors = []
 
     if (!req.body.title) {
@@ -61,13 +61,21 @@ app.post('/ideas', (req, resp) => {
     }
 
     if(errors.length > 0) {
-        resp.render('ideas/add', {
+        res.render('ideas/add', {
             errors: errors,
             title: req.body.title,
             details: req.body.details
         })
     } else {
-        resp.send('passed')
+        const newUser = {
+            title: req.body.title,
+            details: req.body.details
+        }
+        new Idea(newUser)
+            .save()
+            .then(idea => {
+                res.redirect('/ideas')
+            })
     }
 })
 

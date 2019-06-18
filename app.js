@@ -3,7 +3,8 @@ const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
-
+const session = require('express-session');
+const flash = require('connect-flash');
 const app = express();
 
 // map global promise
@@ -31,8 +32,26 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// method-overrie middleware
+// method-override middleware
 app.use(methodOverride('_method'));
+
+// express session middleware
+app.use(session({
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: true
+}))
+
+// flash
+app.use(flash());
+
+// global variables
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    next();
+})
 
 //index route
 app.get('/', (req, res) => {
@@ -66,25 +85,25 @@ app.get('/ideas/edit/:id', (req, res) => {
     Idea.findOne({
         _id: req.params.id
     })
-        .then(idea => {
-            res.render('ideas/edit', {
-                idea:idea
-            })
+    .then(idea => {
+        res.render('ideas/edit', {
+            idea:idea
         })
+    })
 });
 
 // process form
 app.post('/ideas', (req, res) => {
     let errors = []
-
+    
     if (!req.body.title) {
         errors.push({ text: 'Please add a title' })
     }
-
+    
     if(!req.body.details) {
         errors.push({ text: 'Please add some details' })
     }
-
+    
     if(errors.length > 0) {
         res.render('ideas/add', {
             errors: errors,
@@ -97,24 +116,26 @@ app.post('/ideas', (req, res) => {
             details: req.body.details
         }
         new Idea(newUser)
-            .save()
-            .then(idea => {
+        .save()
+        .then(idea => {
+                req.flash('success_msg', 'Video idea added');
                 res.redirect('/ideas')
             })
-    }
-})
-
-// edit form process
-app.put('/ideas/:id', (req, res) => {
-    Idea.findOne({
-        _id: req.params.id
+        }
     })
+    
+    // edit form process
+    app.put('/ideas/:id', (req, res) => {
+        Idea.findOne({
+            _id: req.params.id
+        })
         .then(idea => {
             idea.title = req.body.title,
             idea.details = req.body.details
-
+            
             idea.save()
-                .then(idea => {
+            .then(idea => {
+                    req.flash('success_msg', 'Video idea updated');
                     res.redirect('/ideas')
                 })
         })
@@ -122,8 +143,9 @@ app.put('/ideas/:id', (req, res) => {
 
 // delete
 app.delete('/ideas/:id', (req, res) => {
-    Idea.remove({_id: req.params.id})
+    Idea.deleteOne({_id: req.params.id})
         .then(() => {
+            req.flash('success_msg', 'Video idea removed')
             res.redirect('/ideas')
         })
 })
